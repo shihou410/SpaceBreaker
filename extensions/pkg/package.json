@@ -1,0 +1,28 @@
+{
+  "package_version": 2,
+  "name": "pkg",
+  "version": "1.0.0",
+  "author": "向前",
+  "license": "MIT",
+  "editor": ">=3.6.0",
+  "description": "用于存放扩展包",
+  "contributions": {
+    "asset-db": {
+      "mount": {
+        "path": "./node_modules",
+        "readonly": true
+      }
+    }
+  },
+  "scripts": {
+    "add": "node ./index.js add",
+    "remove": "node ./index.js remove",
+    "update": "node ./index.js update"
+  },
+  "dependencies": {
+    "@gamex/cc-ecs": "^3.0.2",
+    "@gamex/cc-expand": "^1.1.0",
+    "@gamex/cc-quadtree": "^2.0.1",
+    "@gamex/cc-sap": "^2.0.3"
+  }
+}

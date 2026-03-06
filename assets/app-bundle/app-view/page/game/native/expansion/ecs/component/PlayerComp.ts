@@ -16,6 +16,8 @@ export default class PlayerComp extends EcsComponent {
         this.target = null;
     }
 
+    bulletCount: number = 0;
+
 }
 
 

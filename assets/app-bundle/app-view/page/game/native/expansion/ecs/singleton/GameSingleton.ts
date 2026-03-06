@@ -3,4 +3,8 @@ import { ecsclass, EcsSingleton } from '../../../../../../../../pkg-export/@game
 @ecsclass('GameSingleton')
 export class GameSingleton extends EcsSingleton {
     public gameOver: boolean = false;
+
+
+    public spawnInvertal: number = 1;
+
 }

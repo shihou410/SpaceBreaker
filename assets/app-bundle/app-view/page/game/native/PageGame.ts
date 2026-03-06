@@ -13,6 +13,12 @@ import PlayerSystem from './expansion/ecs/system/PlayerSystem';
 import AnimaComp from './expansion/ecs/component/AnimaComp';
 import ShootComp from './expansion/ecs/component/ShootComp';
 import ShootSystem from './expansion/ecs/system/ShootSystem';
+import SpawnerSystem from './expansion/ecs/system/SpawnerSystem';
+import { GameSingleton } from './expansion/ecs/singleton/GameSingleton';
+
+
+
+const EnemyPx: number[] = [-270, -135, 0, 135, 270];
 
 const { ccclass, property } = _decorator;
 @ccclass('PageGame')
@@ -62,7 +68,8 @@ export class PageGame extends BaseView.BindController(GameController) {
         this.pool_prop = new NodePool();
         this.pool_enemy = new NodePool();
 
-        this.controller.on("Shoot", this.onShoot, this);
+        this.controller.on('Shoot', this.onShoot, this);
+        this.controller.on('Spawn', this.onSpawn, this);
     }
 
     onShow(params: any) {
@@ -79,9 +86,13 @@ export class PageGame extends BaseView.BindController(GameController) {
 
     private initGame() {
 
+        EcsWorld.inst.addSingleton(GameSingleton);
+
         EcsWorld.inst.addSystem(PlayerSystem);
         EcsWorld.inst.addSystem(ShootSystem);
         EcsWorld.inst.addSystem(MoveSystem);
+        EcsWorld.inst.addSystem(SpawnerSystem);
+
 
 
 
@@ -111,10 +122,6 @@ export class PageGame extends BaseView.BindController(GameController) {
             this.pool_enemy.put(node);
         }
 
-
-
-
-
     }
 
 
@@ -133,45 +140,46 @@ export class PageGame extends BaseView.BindController(GameController) {
         const playComp = entity.add(PlayerComp);
         const nodeComp = entity.add(NodeComponent);
         const animaComp = entity.add(AnimaComp);
-        entity.add(ShootComp);
+
+
 
         nodeComp.setPosition(node.x, node.y);
         playComp.target.set(node.x, node.y);
 
+        const endFun: Function = (e: EventTouch) => {
+            const shootComp = entity.get(ShootComp);
+            entity.remove(shootComp);
+            animaComp.state = "idle";
+        };
+
         node.on(NodeEventType.TOUCH_START, (e: EventTouch) => {
             animaComp.state = "move";
-
+            const shootComp = entity.add(ShootComp);
+            shootComp.shootInterval = 0.12;
         }, this);
         node.on(NodeEventType.TOUCH_MOVE, (e: EventTouch) => {
             const lp = e.getUILocation();
             playComp.target = this.layer_ins.getComponent(UITransform).convertToNodeSpaceAR(v3(lp.x, lp.y, 1));
         }, this);
-        node.on(NodeEventType.TOUCH_END, (e: EventTouch) => {
-            animaComp.state = "idle";
-        }, this);
-        node.on(NodeEventType.TOUCH_CANCEL, (e: EventTouch) => {
-            animaComp.state = "idle";
-        }, this);
+        node.on(NodeEventType.TOUCH_END, endFun, this);
+        node.on(NodeEventType.TOUCH_CANCEL, endFun, this);
     }
 
 
     private onShoot(entity: GameEntity) {
 
-
         const playerComp = entity.get(PlayerComp);
         const nodeComp = entity.get(NodeComponent);
 
         if (playerComp) {
-            this.createBullet(nodeComp.x, nodeComp.y);
-            console.log("啥情况", nodeComp.y);
-
+            playerComp.bulletCount++;
+            const x = Math.round(Math.sin(playerComp.bulletCount * Math.PI / 3)) * 30 + nodeComp.x;
+            this.createBullet(x, nodeComp.y, 90, 1200);
         }
-
-
     }
 
 
-    private createBullet(x: number, y: number) {
+    private createBullet(x: number, y: number, angle: number, speed: number) {
         const node = this.pool_pbullet.get() || instantiate(this.prefab_pbullet);
         this.layer_bullet.addChild(node);
         node.setPosition(x, y);
@@ -180,14 +188,37 @@ export class PageGame extends BaseView.BindController(GameController) {
         const nodeComp = entity.add(NodeComponent);
         const moveComp = entity.add(MoveComponent);
 
-        moveComp.toward = 90;
-        moveComp.speed = 680;
+        moveComp.toward = angle;
+        moveComp.speed = speed;
 
         nodeComp.setPosition(node.x, node.y);
     }
 
 
 
+    private onSpawn() {
+
+        for (let i = 0; i < EnemyPx.length; i++) {
+            this.createEnemy(EnemyPx[i]);
+        }
+
+    }
+
+    private createEnemy(x: number,) {
+        const node = this.pool_enemy.get() || instantiate(this.prefab_enemy);
+        this.layer_ins.addChild(node);
+        node.setPosition(x, view.getVisibleSize().height / 2 + 100);
+
+        const entity = EcsWorld.inst.createEntity(GameEntity, node);
+        const nodeComp = entity.add(NodeComponent);
+        const moveComp = entity.add(MoveComponent);
+        // const enemyComp = entity.add()
+
+        moveComp.toward = -90;
+        moveComp.speed = 368;
+
+        nodeComp.setPosition(node.x, node.y);
+    }
 
 }
 

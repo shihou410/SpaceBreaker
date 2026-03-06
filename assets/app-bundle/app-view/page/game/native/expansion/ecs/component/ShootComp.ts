@@ -1,6 +1,5 @@
 import { ecsclass } from "db://assets/pkg-export/@gamex/cc-ecs";
 import { EcsComponent } from "db://pkg/@gamex/cc-ecs";
-import { Vec3 } from "cc";
 
 @ecsclass("ShootComp")
 export default class ShootComp extends EcsComponent {
